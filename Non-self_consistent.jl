@@ -26,7 +26,7 @@ V_ph = collect(-0.5*sitenum*a2:a2:0.5*a2*(sitenum+1))
 
 #%%
 
-Phonon definitions
+#Phonon definitions
 
 ### Disperion relation
 function ω𝑝(k)
