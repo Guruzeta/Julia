@@ -1,0 +1,77 @@
+
+# The Goal for the code
+1. Get n_k(t,t) for both phonons and electrons for larger t
+2. Just simple 2 component dyson??????? - Is it the problem itself?
+
+
+3. DR(t,t) = 0 exactly (not approximately)
+Same for $\bar{D}_R$ = t,t value is exactly -1
+
+4. Currently doing a non-self consistent for loop
+5. For DK(i+1,i+1) case, we've to wait until we've GK(i,i+1), GR(i+1,i) i.e. non-diagonal entries on the new edges
+6. dkbar[i,i] assignment should probably work, given I've SigmaR, DK + sigmaK, GR values on the edges of the i,i block and the on i-1,i-1 block too
+
+7. DK Block seems correct
+8. In Gr, GK, update, we're using the "same number" of phonon modes and same number of electron modes. Is that fair?
+(probably)
+9. For electrons, the Gr and Ga matrices are hermitian conj of each other, while for phonons they're just transpose of one another.
+10. Had a made a mistake in Gr(t,t) Initialization - should be -i, instead of -1
+(Make this Initialization stick) + Initialization in 2*2 box
+11. Update GK(t+ϵ,t+ϵ) i.e GK(i+1,i+1) here  - needs Σₑᴿ on the i+1 block edges
+i.e. ranging from i,0 to i,i+1
+12. ^ also needs Σₑᴷ on the i+1 block edges  i.e. ranging from i,0 to i,i+1
+13. Now extract self energies Σₑᴿ,Σₑᴷ in the n+1,n+1 block (shall be used for c
+  alculation of GR in n+2,n+2 loop i.e. next big loop's
+GR,GK update since you're dropping the self consistent term)
+14. indexin shall only work for 1d BZ and needs to modified for higher d
+15. Zero mode needed for summing the +-π/a1 modes in calculation of the Σ𝑝ʳ
+16. Issue at sumBZ1d = adding 2 and 3rd momenta gives 7th momenta - decimal
+errors
+17. # lesson - .$ where $ is a  binary operation is the julia equivalent of handling doing array +-* with a scalar on each element
+18. -ve k is done for 1d.
+19. What was the reason for ignoring the SigmaA* GA term in the evolution?
+20. Dkbar[i,i] -Correct? (probably
+21. I mistook k as momentum itself in definitions of energy and all the propagators. Should be replaced by V_ph[k]
+
+
+### Checks
+1. DK is a symmetric matrix
+2. iGK is a hermitian matrix (or Gk is anti-hermitian))
+3.  Currently doing a non-self consistent for loop
+4.
+
+
+
+### Need to put later: potential Causes of error
+1. Not initializing the 2,2 index properly for now - Will see later
+2. Dkbar[i,i] -Correct? (probably
+
+daydreaming
+
+
+## Debugging
+1. something fishy happens after i=11, the values shoot up and just become 0
+
+### Improvements
+1. make it into separate files
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+What AM I even avoiding? Times are tough. Sagnik made huge progress, all on his own. I managed to do little in terms of the code.
+Continued this way, in all actuality, I feel like a dragging leg of the team. But there's a way out - have 5 meetings with results and
+you may win back your spot. This means saying no to every obligation other than coding to code. And even on the times scheduled for
+coding, this means straining yourself to ounce the very last decimal of perfection and accuracy. Be determined and don't waste your t
+ime.

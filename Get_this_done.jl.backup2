@@ -1,0 +1,352 @@
+######### Model/simulation parameters
+t𝑝=1 #phonon bandwidth
+tₑ=3 #electron bandwidth= = σ
+a1=1  #lattice constant
+λ𝑐= 1 #systembath coupling
+Tₑ=1.0 # electron temperature
+T𝑝=0.5 # phonon temperature
+μ = -1  # chemical potential of the electron
+
+
+#time-simulation parameters
+h= 0.1 #the time spacing
+Time_max = 50 #the net time
+N𝑡= Int64(Time_max/h) #
+
+
+#phonon volume parameters
+sitenum = 6 #gives the no. of sites in the lattice
+a2=2*π*(1/(sitenum*a1)) #reciprocal space lattice constant
+V_ph = collect(-0.5*sitenum*a2:a2:0.5*a2*(sitenum+1))
+filter!(e->e!=0,V_ph) # not taking k=0 mode currently
+
+
+#%%
+
+Phonon definitions
+
+### Disperion relation
+function ω𝑝(k)
+    return t𝑝*abs(sin(k*a1))
+end
+ω𝑝(10)
+
+### Definition of Bare D_0, Dzerobar, and D_zero_K
+function D₀ᴿ(k,t1,t2)
+    if t1>t2
+        return (-(1)*sin(ω𝑝(k)*(t1-t2)*h))/(ω𝑝(k))     # the equal to case shall give 0
+    else
+        return 0
+    end
+end
+
+D₀ᴿ(10,2,1)
+-sin(ω𝑝(10)*h)/ω𝑝(10)
+
+
+function D̄₀ᴿ(k,t1,t2)
+    if t1>=t2                            ### What does D̄ do at equal times? produce 1? What if it rigorously doesn't hold?
+        return (-1*cos(ω𝑝(k)*(t1-t2)*h))
+    else
+        return 0
+    end                     #remember this is only true if t1>t2
+end
+
+D̄₀ᴿ(10,1,1)
+cos(ω𝑝(10)*h)
+
+
+function D₀ᴷ(k,t,t1,Tphonon)
+    a= (-im)*(cos(ω𝑝(k)*(t-t1)*h) * coth(ω𝑝(k)*0.5/(Tphonon)) )* (1/ω𝑝(k))
+    return a
+end
+
+D₀ᴷ(10,2,1,1)
+
+function D̄₀ᴷ(k,t,t1,Tphonon)
+    return im*sin(ω𝑝(k)*(t-t1)*h)*coth(ω𝑝(k)*0.5/(Tphonon))
+end
+
+D̄₀ᴷ(1,2,1,1)
+
+#%%
+Electron Definitions
+
+function ϵₑ(k)
+    return tₑ*(1-cos(k*a1))
+end
+
+
+function G₀ᴿ(k,t1,t2)
+    if t1>=t2
+        return -im*exp(-im*ϵₑ(k)*(t1-t2)*h)
+    else
+        return 0
+    end
+end
+
+G₀ᴿ(10,1e4,1e4) #prints 0 for t1<t2
+
+function G₀ᴷ(k,t1,t2,Telectron,μ)
+    return -im*tanh((ϵₑ(k)-μ)/(2*Telectron))*exp(-im*ϵ(k)*(t1-t2)*h)
+end
+
+#%%
+Matrix definitions: making Array of arrays : each inner array is 2dim with currently undefine size, the outer array is 1d and holds
+total k points+ 10 elements
+
+Dᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+D̄ᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+Dᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+D̄ᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+Gᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+Gᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+Σ𝑝ᴿ= Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+Σ𝑝ᴷ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+Σₑᴿ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+Σₑᴷ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+
+
+for i=1:length(V_ph)+10
+    Dᴿmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    D̄ᴿmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    Dᴷmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    D̄ᴷmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    Gᴿmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    Gᴷmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    Σ𝑝ᴿ[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    Σ𝑝ᴷ[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    Σₑᴿ[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+    Σₑᴷ[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
+end
+
+
+Dᴿmatrix[10][1,1]
+
+
+#%%
+#Initialization
+
+for k =1:length(V_ph)
+    for i=1:N𝑡
+        Dᴿmatrix[k][i,i]=0 #exactly 0
+        D̄ᴿmatrix[k][i,i]=-1 #exactly 1
+        Dᴷmatrix[k][i,i] =1                   ### Why am I initializing the DK?
+        Gᴿmatrix[k][i,i] = -im           ## Gr(t,t)≂̸0
+        Gᴷmatrix[k][i,i] = G₀ᴷ(k,t,t,Tₑ,μ)      ### Why am I even initializing this? Aren't we supposed to get this from the code?
+
+        Dᴿmatrix[k][i+1,i] = D₀ᴿ(k,i+1,i) #only 2,1 or all i+1,i???
+        D̄ᴿmatrix[k] [i+1,i] = D̄₀ᴿ(k,+i,i)
+        Σ𝑝ᴿ[k][i+1,i]
+        Σ𝑝ᴷ
+    end
+    println(k)
+end
+
+Σ𝑝ᴿ[k][2,1]=??????????
+
+# Definitions of convolutions for phonons
+
+function F(k,t₁,t₂)
+    if t₁>t₂
+        return sum(t->Σ𝑝ᴿ[k][t₁,t]*Dᴿmatrix[k][t,t₂]*h, collect(t₂:t₁))
+    elseif t₁==t₂
+        return 0
+    else
+        return "You're convoluting in the opposite direction. Possible error at RR conv"
+    end
+end
+
+
+F(3,9,10)
+
+function RK(k,t1,t2) #∫₀ᵗ Σ𝑝ᴿ⋅Dᴷ
+    if t1>1
+        return sum(t->Σ𝑝ᴿ[k][t1,t]*Dᴷmatrix[k][t,t2]*h, collect(1:t1))
+    else
+        return 0
+    end
+end
+
+RK(2,2,3)
+
+function KA(k,t1,t2) #∫₀⋅Dᴿ
+    if t2>1
+        return sum(t->Σ𝑝ᴷ[k][t1,t]*Dᴿmatrix[k][t2,t] * h, collect(1:t2)) ## Dᴬ is just transpose of Dᴿ
+    else
+        return 0
+    end
+end
+KA(2,3,2)
+
+###### Equivalent definitions of convolutions for electrons ###########
+
+function Fₑ(k,t₁,t₂)
+    if t₁>t₂
+        return sum(t->Σₑᴿ[k][t₁,t]*Gᴿmatrix[k][t,t₂]*h, collect(t₂:t₁))
+    elseif t₁==t₂
+        return 0
+    else
+        return "You're convoluting in the opposite direction. Possible error at RR/electron conv"
+    end
+end
+
+function RKₑ(k,t1,t2) #∫₀ᵗ Σₑᴿ⋅Dᴷ
+    if t1>1
+        return sum(t->Σₑᴿ[k][t1,t]*Gᴷmatrix[k][t,t2]*h, collect(1:t1))
+    else
+        return 0
+    end
+end
+
+
+RK(2,2,3)
+
+function KAₑ(k,t1,t2) #∫₀⋅Dᴿ
+    if t2>1
+        return sum(t->Σₑᴷ[k][t1,t]*conj(Gᴿmatrix[k][t2,t] )*h, collect(1:t2))
+    else
+        return 0
+    end
+end
+
+function sumBZ1d(k,p) # returns the index of element in the BZ array that reflects the physical sum of two input indices, taking the periodic behaviour into account
+    if k==π/a1 && p==π/a1
+        return \
+    end
+end
+length(V_ph)
+
+indexin(π/a1,V_ph)[1]
+
+#%%
+
+#Actual for loop
+for i=2:N𝑡   ### The diagonal value #should probably start from 2
+
+
+    #Update DR
+    for k=1:length(V_ph)
+        for j=1:i
+
+            if j<i
+                D̄ᴿmatrix[k][i,j] = ω𝑝(k)^2 * D₀ᴿ(k,i,i-1) * Dᴿmatrix[k][i-1,j] - D̄₀ᴿ(k,i,i-1) * D̄ᴿmatrix[k][i-1,j] + (h/2)*( D̄₀ᴿ(k,i,i)* F(k,i,j) + D̄₀ᴿ(k,i,i-1) * F(k,i-1,j) )
+            end
+            Dᴿmatrix[k][i+1,j] = D̄₀ᴿ(k,i+1,i) * Dᴿmatrix[k][i,j] + D₀ᴿ(k,i+1,i) * D̄ᴿmatrix[k][i,j] + (h/2)*D₀ᴿ(k,i+1,i)*F(k,i,j)
+        end
+    end
+
+     #Update DK
+     for k = 1:length(V_ph)
+         for j=1:i
+
+             D̄ᴷmatrix[k][i,j] = ω𝑝(k)^2 * D₀ᴿ(k,i,i-1) * Dᴷmatrix[k][i-1,j] - D̄₀ᴿ(k,i,i-1) * D̄ᴷmatrix[k][i-1,j] + (h/2)*(  D̄₀ᴿ(k,i,i)* RK(k,i,j) + D̄₀ᴿ(k,i,i-1)* RK(k,i-1,j) + D̄₀ᴿ(k,i,i)* KA(k,i,j) + D̄₀ᴿ(k,i,i-1)* KA(k,i-1,j) )
+             Dᴷmatrix[k][i+1][j] = D̄₀ᴿ(k,i+1,i) * Dᴷmatrix[k][i,j] + D₀ᴿ(k,i+1,i) * D̄ᴷmatrix[k][i,j] + (h/2)*( D₀ᴿ(k,i+1,i)* RK(k,i,j) + D₀ᴿ(k,i+1,i)* KA(k,i,j) )
+             Dᴷmatrix[k][j,i+1] = -conj(Dᴷmatrix[k][i+1,j])
+             if j!=i
+                D̄ᴷmatrix[k][j,i] = +conj(D̄ᴷmatrix[k][i,j])#what abt i,i entry? If Dk is imaginary, then it will just flip sign here.....? This term is to take care of that...Not sure
+             end
+         end
+     end
+
+    # Update GR, GK
+    for k = 1 : length(V_ph)
+        for j=1:i
+            Gᴿmatrix[k][i+1,j] = im*G₀ᴿ(k,i+1,i)*Gᴿmatrix[k][i,j] + (h/2)* G₀ᴿ(k,i+1,i)*(Fₑ(k,i,j))
+            Gᴷmatrix[k][i+1,j] = im*G₀ᴿ(k,i+1,i)*Gᴷmatrix[k][i,j]+ (h/2)*G₀ᴿ(k,i+1,i)* (RKₑ(k,i,j) + KAₑ(k,i,j))
+            Gᴷmatrix[k][j,i+1] = - conj(Gᴷmatrix[k][i+1,j]) # iGᴷ is hermitian  ⟹ iGᴷ(1,2) = conj((iGᴷ(2,1)) ⟹ Gᴷ(1,2) = - conj(Gᴷ(2,1))
+        end
+    end
+
+for j=1:i
+    # Extract Phonon self energy Σ𝑝ᴷ,Σ𝑝ᴿ in the n+1,n+1 block (use in Dr calculation in next loop)
+    # Σ𝑝ᴿ update
+    for j=1:i
+        for k=1:length(V_ph)
+            sum=0
+            for p=1:length(V_ph)
+                if V_ph(k)+V_ph(p)>π/a
+                    if k==π/a && p==π/a
+                        momentum = π/a
+                    else
+                        momentum = indexin(V_ph(k)+V_ph(p)-2*π/a,V_ph)
+                    end
+                        Σ𝑝ᴿ[k][i+1,j] = -(λ𝑐^2)/2*()
+                    momentum=nothing
+
+                elseif  V_ph(k)+V_ph(p)<-π/a
+                    momentum = indexin(V_ph(k)+V_ph(p)+2*π/a,V_ph)
+
+                else
+                    momentum =
+
+                    momentum=nothing
+
+                end
+
+
+            end
+        end
+    end
+
+
+    #Now extract self energies Σₑᴿ,Σₑᴷ in the n+1,n+1 block (shall be used for calculation of GR in n+2,n+2 loop i.e. next big loop's GR,GK update since you're dropping the self consistent term)
+
+    #Update GK(t+ϵ,t+ϵ) i.e GK(i+1,i+1) here  - needs Σₑᴿ on the i+1 block edges  i.e.
+
+    #Update DK(t+ϵ,t+ϵ) here, D̄(i,i) block is calculated already
+
+
+end
+
+1<2+3<5
+
+indexin(7,b)[1]
+
+2+3>π
+
+real(2+3*im)
+
+mod(-1,2)-1
+δ=2*π/6
+2.09-2*
+
+#if it isn't <-π or >π, then keep it as it is. If it's more, then add or subtract 2π
+
+1+2~4
+1+3~5
+1+4~2
+1+5~3
+1+6
+2+3~1 or 6
+
+λ𝑐^2/2
+
+
+V_ph
+
+i = findall(x->x==5,b)
+
+
+a=collect(1:10)
+b=collect(4:10)
+a[5]
+f(t) = sum(t->a[t]*b[t], collect(1:Int64(t)))
+
+f(5)
+
+
+c = collect(1:10)
+
+
+g(i,j) = if sum(t-> a[i]*c[t]*b[j], collect(j:i))*(i>j)
+mod()
