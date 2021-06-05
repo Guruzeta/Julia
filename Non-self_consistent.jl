@@ -314,12 +314,8 @@ boxinit()
 matinit()
 boxinit()
 #Actual for loop
-set=12
-for i=2:12   ### The diagonal value #should probably start from 2
-
-    if i==10
-        @bp
-    end
+set=N𝑡
+for i=2:set       ### The diagonal value #should probably start from 2
 
     #Update DR
     for k=1:length(V_ph)
@@ -400,7 +396,7 @@ for i=2:12   ### The diagonal value #should probably start from 2
     end
 
     ## Σₑᴷ Update
-    for j=1:length(V_ph)
+    for j=1:i
         for k=1:length(V_ph)
             sum1=0
             sum2=0
@@ -475,10 +471,6 @@ for i=2:12   ### The diagonal value #should probably start from 2
         sum=nothing
     end
 
-    if i==12
-        println(i)
-    end
-
 end
 
 
@@ -504,20 +496,20 @@ end
 
 #Plotting
 a= nothing
-a,b = Array{ComplexF64}(undef,12),Array{ComplexF64}(undef,12)
-for i=1:10
-    a[i] = Dᴿmatrix[5][i,1]
-    b[i] = Gᴷmatrix[7][i,i]
+a,b = Array{ComplexF64}(undef,set),Array{ComplexF64}(undef,set)
+for i=1:set
+    a[i] = Dᴷmatrix[1][i,1]
+    b[i] = Gᴷmatrix[1][i,i]
 end
 for i=1:length(b)
     println(b[i])
 end
-
+b
 using Plots
 
-t= collect(h:h:250*h)
+t= collect(h:h:set*h)
 plot( t,0.5.*(1 .+ imag(b)),label="electrons")
-plot(t,real(im*a),label="phonons" )
+plot!(t,real(im*a),label="phonons" )
 t
 250*h
 
@@ -543,13 +535,12 @@ f(5)
 #%%
 Debugging
 
-
+matinit()
+boxinit()
 f4 = function()
     for i=2:12  ### The diagonal value #should probably start from 2
 
-        if i==10
-            @bp
-        end
+
 
         #Update DR
         for k=1:length(V_ph)
@@ -629,7 +620,7 @@ f4 = function()
         end
 
         ## Σₑᴷ Update
-        for j=1:length(V_ph)
+        for j=1:i
             for k=1:length(V_ph)
                 sum1=0
                 sum2=0
@@ -649,7 +640,9 @@ f4 = function()
 
         ############## Diagonal terms update #############
 
-
+        if i==10
+            @bp
+        end
         #Update GK(t+ϵ,t+ϵ) i.e GK(i+1,i+1) here  - needs Σₑᴿ on the i+1 block edges  i.e.
         for k=1:length(V_ph)
             Gᴷmatrix[k][i+1,i+1] = im*G₀ᴿ(k,i+1,i)*Gᴷmatrix[k][i,i+1]+ (h/2)*G₀ᴿ(k,i+1,i)* (RKₑ(k,i,i+1) + KAₑ(k,i,i+1))
@@ -677,7 +670,9 @@ f4 = function()
             sum=nothing
         end
 
-
+        if i==10
+            @bp
+        end
         #Update DK(t+ϵ,t+ϵ) here, D̄(i,i) block is calculated already
         for k=1:length(V_ph)
             D̄ᴷmatrix[k][i+1,i] = ω𝑝(k)^2 * D₀ᴿ(k,i+1,i) * Dᴷmatrix[k][i,i] - D̄₀ᴿ(k,i+1,i) * D̄ᴷmatrix[k][i,i] + (h/2)*(  D̄₀ᴿ(k,i+1,i+1)* RK(k,i+1,i) + D̄₀ᴿ(k,i+1,i)* RK(k,i,i) + D̄₀ᴿ(k,i+1,i+1)* KA(k,i+1,i) + D̄₀ᴿ(k,i+1,i)* KA(k,i,i) )
@@ -703,15 +698,9 @@ f4 = function()
             Σₑᴷ[k][i+1,i+1]=sum
             sum=nothing
         end
-        println("\007")
+        println(i)
     end
 end
 
+
 @run f4()
-
-
-η=22
-
-f(x) = x*η
-
-f(1)
