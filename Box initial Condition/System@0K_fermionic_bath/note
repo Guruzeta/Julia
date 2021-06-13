@@ -1,0 +1,23 @@
+Parameters:
+
+tₑ=1 #electron bandwidth= = σ
+tB =3 #bath bandwidth
+a1=2  #lattice constant
+λ= 1 #system bath coupling
+Tₑ=0# electron temperature
+Temp_bath= 0.8 #the bath temperature (or whatever the plot mentions)
+μ = 1  # chemical potential of the electron
+μbath = 1 #chem potential of the bath
+
+
+
+#time-simulation parameters
+h= 0.1 #the time spacing
+Time_max = 50 #the net time
+N𝑡= Int(floor(Time_max/h)) #
+
+
+#volume parameters
+sitenum = 20 #gives the no. of sites in the lattice
+a2=2*π*(1/(sitenum*a1)) #reciprocal space lattice constant
+V_ph = collect(-0.5*sitenum*a2:a2:0.5*a2*(sitenum+1))
