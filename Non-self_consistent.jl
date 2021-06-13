@@ -2,12 +2,12 @@ using  Debugger
 
 
 ######### Model/simulation parameters
-t𝑝=1 #phonon bandwidth
-tₑ=3 #electron bandwidth= = σ
+t𝑝=2 #phonon bandwidth
+tₑ=1 #electron bandwidth= = σ
 a1=1  #lattice constant
-λ𝑐= 1 #systembath coupling
-Tₑ=0.5 # electron temperature
-T𝑝=1.0 # phonon temperature
+λ𝑐= 1 #phonon-electron coupling
+Tₑ=0.75# electron temperature
+T𝑝=1.75# phonon temperature
 μ = -1  # chemical potential of the electron
 
 
@@ -18,7 +18,7 @@ N𝑡= Int64(Time_max/h) #
 
 
 #phonon volume parameters
-sitenum = 6 #gives the no. of sites in the lattice
+sitenum = 4 #gives the no. of sites in the lattice
 a2=2*π*(1/(sitenum*a1)) #reciprocal space lattice constant
 V_ph = collect(-0.5*sitenum*a2:a2:0.5*a2*(sitenum+1))
 #filter!(e->e!=0,V_ph) # not taking k=0 mode currently
@@ -30,7 +30,7 @@ V_ph = collect(-0.5*sitenum*a2:a2:0.5*a2*(sitenum+1))
 
 ### Disperion relation
 function ω𝑝(k)
-    return t𝑝*abs(sin(V_ph[k]*a1))+1
+    return t𝑝*abs(sin(V_ph[k]*a1*0.5))+0.2
 end
 
 
@@ -61,7 +61,7 @@ function D₀ᴷ(k,t,t1,Tphonon)
     return a
 end
 
-D₀ᴷ(1,2,1,T𝑝) - D₀ᴷ(1,1,2,T𝑝)
+D₀ᴷ(1,2,1,T𝑝)
 
 function D̄₀ᴷ(k,t,t1,Tphonon)
     return im*sin(ω𝑝(k)*(t-t1)*h)*coth(ω𝑝(k)*0.5/(Tphonon))
@@ -71,10 +71,10 @@ end
 
 #%%
 
-Electron Definitions
+# Electron Definitions
 
 function ϵₑ(k)
-    return tₑ*(1-cos(V_ph[k]*a1))+1
+    return tₑ*(1-cos(V_ph[k]*a1))+0.2
 end
 
 
@@ -89,36 +89,42 @@ end
     #prints 0 for t1<t2
 
 function G₀ᴷ(k,t1,t2,Telectron,μ)
+
     return -im*tanh((ϵₑ(k)-μ)/(2*Telectron))*exp(-im*ϵₑ(k)*(t1-t2)*h)
 end
+
+
+
+G₀ᴷ(1,2,3,4,5)
+
 
 #%%
 #Matrix definitions: making Array of arrays : each inner array is 2dim with currently undefine size, the outer array is 1d and holds
 #total k points+ 10 elements
 
 
-    Dᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Dᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    D̄ᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    D̄ᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    Dᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Dᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    D̄ᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    D̄ᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    Gᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Gᴿmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    Gᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Gᴷmatrix = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    Σ𝑝ᴿ= Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Σ𝑝ᴿ= Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    Σ𝑝ᴷ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Σ𝑝ᴷ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    Σₑᴿ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Σₑᴿ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
-    Σₑᴷ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+10)
+    Σₑᴷ = Array{Array{ComplexF64,2},1}(undef,length(V_ph)+2)
 
 matinit = function ()
-    for i=1:length(V_ph)+10
+    for i=1:length(V_ph)+2
         Dᴿmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
         D̄ᴿmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
         Dᴷmatrix[i] = Array{ComplexF64,2}(undef,N𝑡+5,N𝑡+5)
@@ -233,21 +239,12 @@ end
 
 negative(4)
 
-(4==4)*3
-
-V_ph[2]+V_ph[3]>V_ph[1]
-sumBZ1d(2,5)
-c=nothing
-c=20
-println("new line")
-sumBZ1d(6,6)
 
 # lesson - .$ where $ is a  binary operation is the julia equivalent of handling doing array +-* with a scalar on each element
 sumBZ1d(1,6) #probably need to define zero mode
-indexin(π/a1,V_ph)[1]
-V_ph
 
-G₀ᴿ(2,3,2)
+
+
 
 #%%
 
@@ -255,6 +252,7 @@ G₀ᴿ(2,3,2)
 
 
 ######### diagonal Initialization ##########
+boxinitindex=20
 
 boxinit=function()
 
@@ -276,33 +274,51 @@ boxinit=function()
 
 
 
-    ######## 2×2 Box Initialization ############
+    ######## Box Initialization ############
 
     #GF Initialization
 
     for k=1:length(V_ph)
-        Dᴿmatrix[k][2,1] = D₀ᴿ(k,2,1) #lower traingular
-        D̄ᴿmatrix[k][2,1] = D̄₀ᴿ(k,2,1) #lower triangular
+        for i=1:boxinitindex
+            for j=1:boxinitindex
+                Dᴿmatrix[k][i,j] = D₀ᴿ(k,i,j)
+                D̄ᴿmatrix[k][i,j] = D̄₀ᴿ(k,i,j)
+                Dᴷmatrix[k][i,j] = D₀ᴷ(k,i,j,T𝑝)
+                D̄ᴷmatrix[k][i,j] = D̄₀ᴷ(k,i,j,T𝑝)
+                Gᴿmatrix[k][i,j] = G₀ᴿ(k,i,j)
+                Gᴷmatrix[k][i,j] =  G₀ᴷ(k,i,j,Tₑ,μ)
 
-        Dᴷmatrix[k][1,1] = D₀ᴷ(k,1,1,T𝑝)
-        Dᴷmatrix[k][1,2] = D₀ᴷ(k,1,2,T𝑝)
-        Dᴷmatrix[k][2,1] = D₀ᴷ(k,2,1,T𝑝)
-        Dᴷmatrix[k][2,2] = D₀ᴷ(k,2,2,T𝑝)
-
-        D̄ᴷmatrix[k][1,1] = D̄₀ᴷ(k,1,1,T𝑝)
-        D̄ᴷmatrix[k][1,2] = D̄₀ᴷ(k,1,2,T𝑝)
-        D̄ᴷmatrix[k][2,1] = D̄₀ᴷ(k,2,1,T𝑝)
-        D̄ᴷmatrix[k][2,2] = D̄₀ᴷ(k,2,2,T𝑝)
-
-        Gᴿmatrix[k][2,1] = G₀ᴿ(k,2,1)
-
-        Gᴷmatrix[k][1,1] =  G₀ᴷ(k,1,1,Tₑ,μ)
-        Gᴷmatrix[k][1,2] =  G₀ᴷ(k,1,2,Tₑ,μ)
-        Gᴷmatrix[k][2,1] =  G₀ᴷ(k,2,1,Tₑ,μ)
-        Gᴷmatrix[k][2,2] =  G₀ᴷ(k,2,2,Tₑ,μ)
-
+            end
+        end
     end
 end
+
+
+
+
+
+
+
+        # Dᴿmatrix[k][2,1] = D₀ᴿ(k,2,1) #lower traingular
+        # D̄ᴿmatrix[k][2,1] = D̄₀ᴿ(k,2,1) #lower triangular
+        #
+        # Dᴷmatrix[k][1,1] = D₀ᴷ(k,1,1,T𝑝)
+        # Dᴷmatrix[k][1,2] = D₀ᴷ(k,1,2,T𝑝)
+        # Dᴷmatrix[k][2,1] = D₀ᴷ(k,2,1,T𝑝)
+        # Dᴷmatrix[k][2,2] = D₀ᴷ(k,2,2,T𝑝)
+        #
+        # D̄ᴷmatrix[k][1,1] = D̄₀ᴷ(k,1,1,T𝑝)
+        # D̄ᴷmatrix[k][1,2] = D̄₀ᴷ(k,1,2,T𝑝)
+        # D̄ᴷmatrix[k][2,1] = D̄₀ᴷ(k,2,1,T𝑝)
+        # D̄ᴷmatrix[k][2,2] = D̄₀ᴷ(k,2,2,T𝑝)
+        #
+        # Gᴿmatrix[k][2,1] = G₀ᴿ(k,2,1)
+        #
+        # Gᴷmatrix[k][1,1] =  G₀ᴷ(k,1,1,Tₑ,μ)
+        # Gᴷmatrix[k][1,2] =  G₀ᴷ(k,1,2,Tₑ,μ)
+        # Gᴷmatrix[k][2,1] =  G₀ᴷ(k,2,1,Tₑ,μ)
+        # Gᴷmatrix[k][2,2] =  G₀ᴷ(k,2,2,Tₑ,μ)
+
 boxinit()
 
 
@@ -310,12 +326,12 @@ boxinit()
 
 
 #%%
-
+Dᴿmatrix
 matinit()
 boxinit()
 #Actual for loop
-set=N𝑡
-for i=2:set       ### The diagonal value #should probably start from 2
+set=100
+for i=20:set       ### The diagonal value #should probably start from 2
 
     #Update DR
     for k=1:length(V_ph)
@@ -474,64 +490,88 @@ for i=2:set       ### The diagonal value #should probably start from 2
 end
 
 
-
-for k=1:length(V_ph)
-    #a = Dᴷmatrix[k][4,4]
-    #a = Dᴿmatrix[k][4,4]
-    #a=  Gᴿmatrix[k][4,4]
-    #a=  Gᴷmatrix[k][1,4]
-    println("$a")
-end
-
-
-
-
-
-
-
-
-
-
 #%%
 
 #Plotting
-a= nothing
-a,b = Array{ComplexF64}(undef,set),Array{ComplexF64}(undef,set)
-for i=1:set
-    a[i] = Dᴷmatrix[1][i,1]
-    b[i] = Gᴷmatrix[1][i,i]
-end
-for i=1:length(b)
-    println(b[i])
-end
-b
+
+set
 using Plots
+Tₑ
+T𝑝
+testk=1
+testrange =80
+#a,b = Array{ComplexF64}(undef,testrange),Array{ComplexF64}(undef,testrange)
+b2=[]
+a2=[]
+for m=1:length(V_ph)
+    a= Array{Float64}(undef,testrange)
+    b = Array{Float64}(undef,testrange)
+    for i=1:testrange
+        #a[i] = Dᴿmatrix[testk][i,1]
+        #b[i] = Gᴿmatrix[testk][i,1]
+        a[i] =  (real(im*Dᴷmatrix[m][i,i])*ω𝑝(m)-1)*0.5            #real(im*Dᴷmatrix[testk][i,i])*ω𝑝(testk)
+        b[i] = (imag(Gᴷmatrix[m][i,i])+1 )*0.5
+    end
+    push!(b2,b)
+    push!(a2,a)
+end
 
-t= collect(h:h:set*h)
-plot( t,0.5.*(1 .+ imag(b)),label="electrons")
-plot!(t,real(im*a),label="phonons" )
-t
-250*h
 
-collect(1:2:100)
+#real(b2)
+plot(real(b2),lw= 3,title = "Tₑ = $(Tₑ), Tphonon = $(T𝑝)")
 
+
+
+savefig(figpath*"testing_order_of_filling1")
+plot(real(a2),legend = false)
+
+t= collect(h:h:testrange*h)
+
+plot(t,real(b),label="nₑ(k,t,t) electrons")
+plot!(t,real(a),label="n𝑝(k,t,t) phonons", title= "For Tₑ=$(Tₑ), T_phonon = $(T𝑝), # of modes=$(sitenum)")
+
+#plot!(t,imag(b2),label="nₑ(k,t,t) electrons")
+
+
+#plot(t,real(a),label="phonons" )
+
+
+
+figpath = "/Users/gurukalyanjayasingh/Desktop/Julia/Plots/"
+
+savefig(figpath*"fig4.png")
+
+for m=1:length(b)
+    println(1+imag(b[m]))
+end
+
+
+
+#Disperion plots
+disp_phonon=[]
+disp_electron= []
+for m=1:length(V_ph)
+    push!(disp_phonon,ω𝑝(m))
+    push!(disp_electron,ϵₑ(m))
+end
+
+plot(disp_phonon)
+plot(disp_electron)
+savefig(figpath*"dispersion2.png")
 #%% Code ends
 
-indexin(7,b)[1]
+Tₑ
+T𝑝
 
+arr1 =[]
 
-#if it isn't <-π or >π, then keep it as it is. If it's more, then add or subtract 2π
+for m=1:length(V_ph)
+    push!(arr1, im*G₀ᴷ(m,1,1,Tₑ,μ))
+end
+arr1
 
-V_ph
+plot(arr1)
 
-i = findall(x->x==5,b)
-
-a=collect(1:10)
-b=collect(4:10)
-a[5]
-f(t) = sum(t->a[t]*b[t], collect(1:Int64(t)))
-
-f(5)
 #%%
 Debugging
 
@@ -704,3 +744,10 @@ end
 
 
 @run f4()
+
+
+g(x) = x^3
+
+f(x) = g(x)+x
+
+f(2)
