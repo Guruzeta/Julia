@@ -330,8 +330,8 @@ Dᴿmatrix
 matinit()
 boxinit()
 #Actual for loop
-set=100
-for i=20:set       ### The diagonal value #should probably start from 2
+testrange=100
+for i=boxinitindex:test       ### The diagonal value #should probably start from 2
 
     #Update DR
     for k=1:length(V_ph)
