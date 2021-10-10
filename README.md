@@ -1,6 +1,6 @@
 # Equilibration of coupled system of Phonons and Electrons
 
-This repository contains pertaining to the problem of real-time equilibration of Phonons and electrons. We are investigating the dynamics of a coupled electron-
+This repository contains codes pertaining to the problem of real-time equilibration of Phonons and electrons. We are investigating the dynamics of a coupled electron-
 phonon system within Keldysh formalism, where both electrons and phonons evolve in time self-consistently, as opposed to the standard paradigm of one set of 
 constituents forming a static bath for the other. 
 
